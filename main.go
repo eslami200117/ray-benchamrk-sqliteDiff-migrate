@@ -1,16 +1,17 @@
 package main
 
 import (
-	"database/sql"
 	"fmt"
-	_ "github.com/mattn/go-sqlite3"
+
+	"gorm.io/driver/sqlite"
+	"gorm.io/gorm"
 )
 
 func main() {
-	db, err := sql.Open("sqlite3", "/database/databases/pointsMaster")
+	db, err := gorm.Open(sqlite.Open("/database/databases/pointMaster_2"), &gorm.Config{})
 	if err != nil {
 		fmt.Println("error:", err)
 	}
+	db.Exec("some query")
 
-	defer db.Close()
 }
