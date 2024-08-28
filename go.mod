@@ -2,6 +2,4 @@ module github.com/eslami200117/sqliteDiff
 
 go 1.22.5
 
-require (
-
-)
+require github.com/mattn/go-sqlite3 v1.14.22
