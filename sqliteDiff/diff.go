@@ -24,3 +24,16 @@ func GetDiff(src, des string) string{
 	}
 	return fmt.Sprintf("diff_%s.sql", strconv.Itoa(randN))
 }
+
+func ApplySql(name string) {
+	inFile, err := os.Open(fmt.Sprintf("script/%s", name))
+	if err != nil {
+		fmt.Println(err)
+	}
+	cmd := exec.Command("sqlite3", "database/databases/Empty")
+	cmd.Stdin = inFile 
+	err = cmd.Run()
+	if err != nil {
+		fmt.Println(err)
+	}
+}
