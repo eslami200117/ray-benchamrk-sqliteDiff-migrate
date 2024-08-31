@@ -42,12 +42,15 @@ def get_table_columns(table):
 
 def remove_sqlite_sequence_lines(input_script, output_script):
     sqlite_sequence_pattern = re.compile(r'^\s*(INSERT INTO|UPDATE)\s+sqlite_sequence', re.IGNORECASE)
+    delete_pattern = re.compile(r'^\s*DELETE\s+FROM', re.IGNORECASE)
 
     with open(input_script, 'r') as file:
         lines = file.readlines()
 
-    filtered_lines = [line for line in lines if not sqlite_sequence_pattern.search(line)]
-
+    filtered_lines = [
+        line for line in lines 
+        if not sqlite_sequence_pattern.search(line) and not delete_pattern.search(line)
+    ]
     with open(output_script, 'w') as file:
         file.writelines(filtered_lines)
 
