@@ -2,16 +2,24 @@ package main
 
 import (
 	"fmt"
+	"time"
 
-	"gorm.io/driver/sqlite"
-	"gorm.io/gorm"
+	"github.com/eslami200117/sqliteDiff/sqliteDiff"
 )
 
 func main() {
-	db, err := gorm.Open(sqlite.Open("/database/databases/pointMaster_2"), &gorm.Config{})
-	if err != nil {
-		fmt.Println("error:", err)
-	}
-	db.Exec("some query")
+	start := time.Now()
+
+	name := sqliteDiff.GetDiff("database/databases/Empty", "database/databases/1403")
+	duration := time.Since(start)
+	fmt.Printf("get diff time: %v\n", duration)
+
+	sqliteDiff.ModifySqlForMaster(name)
+	duration = time.Since(start)
+	fmt.Printf("modify script: %v\n", duration)
+
+	sqliteDiff.ApplySql(name)
+	duration = time.Since(start)
+	fmt.Printf("total time: %v\n", duration)
 
 }
