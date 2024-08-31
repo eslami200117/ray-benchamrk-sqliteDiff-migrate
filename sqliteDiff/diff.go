@@ -39,7 +39,8 @@ func ApplySql(name string) {
 }
 
 func ModifySqlForMaster(name string) {
-	cmd := exec.Command("/usr/bin/python3", "sqlProcessCommmand/scriptConverter2.py", name, name)
+	sqlFilePath := fmt.Sprintf("script/%s", name)
+	cmd := exec.Command("python3", "sqlProcessCommmand/scriptConverter2.py", sqlFilePath, sqlFilePath)
 	err := cmd.Run()
 	if err != nil {
 		fmt.Printf("Error: %v\n", err, )
