@@ -46,8 +46,11 @@ func ApplySql(name string) {
 	if err != nil {
 		log.Fatalf("Failed to apply SQL file: %v", err)
 	}
+	
+	_, _ = db.Exec("PRAGMA synchronous = FULL") // Default is FULL
+	_, _ = db.Exec("PRAGMA journal_mode = DELETE") // Default is DELETE
+	_, _ = db.Exec("PRAGMA temp_store = DEFAULT") // Default is DEFAULT
 
-	fmt.Println("SQL file applied successfully")
 }
 
 func ModifySqlForMaster(name string) {
