@@ -10,9 +10,17 @@ import (
 func main() {
 	start := time.Now()
 
-	sqliteDiff.GetDiff("database/databases/pointsMaster", "database/databases/editedd")
-
+	name := sqliteDiff.GetDiff("database/databases/Empty", "database/databases/14030605")
+	fmt.Println(name)
 	duration := time.Since(start)
+	fmt.Printf("get diff time: %v\n", duration)
 
-	fmt.Printf("Execution time: %v\n", duration)
+	sqliteDiff.ModifySqlForMaster(name)
+	duration = time.Since(start)
+	fmt.Printf("modify script: %v\n", duration)
+
+	sqliteDiff.ApplySql(name)
+	duration = time.Since(start)
+	fmt.Printf("total time: %v\n", duration)
+
 }
