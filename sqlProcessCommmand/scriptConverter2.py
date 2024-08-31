@@ -15,32 +15,35 @@ def modify_update_script(input_script, output_script):
     insert_pattern = re.compile(r'INSERT\s+INTO\s+(\w+)\s*\((.*?)\)\s*VALUES\s*\((.*?)\)', re.IGNORECASE | re.DOTALL)
     update_pattern = re.compile(r'UPDATE\s+(\w+)\s+SET\s+(.*?)\s+WHERE\s+(.*?);', re.IGNORECASE | re.DOTALL)
 
-    # Function to add UUID to INSERT statementsmodify_insert
+    # Function to add UUID to INSERT statements and skip sqlite_sequence
     def modify_insert(match):
         table = match.group(1)
+        if table.lower() == 'sqlite_sequence':
+            return ''  # Skip this INSERT statement
         columns = match.group(2)
         values = match.group(3)
-        
         if 'uuid' not in columns.lower():
             columns += ', uuid'
             values += f", '{script_uuid}'"
-        
         return f"INSERT INTO {table} ({columns}) VALUES ({values})"
 
-    # Function to add UUID to UPDATE statements
+    # Function to add UUID to UPDATE statements and skip sqlite_sequence
     def modify_update(match):
         table = match.group(1)
+        if table.lower() == 'sqlite_sequence':
+            return ''  # Skip this UPDATE statement
         set_clause = match.group(2)
         where_clause = match.group(3)
-        
         if 'uuid' not in set_clause.lower():
             set_clause += f", uuid = '{script_uuid}'"
-        
         return f"UPDATE {table} SET {set_clause} WHERE {where_clause};"
 
     # Modify INSERT and UPDATE statements
     modified_script = insert_pattern.sub(modify_insert, script_content)
     modified_script = update_pattern.sub(modify_update, modified_script)
+
+    # Remove any empty lines that might have been created by skipping statements
+    modified_script = '\n'.join(line for line in modified_script.split('\n') if line.strip())
 
     # Add entry to tblVersion
     current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -58,7 +61,7 @@ if __name__ == "__main__":
     if len(sys.argv) != 3:
         print("Usage: python script.py old_script.sql new_script.sql")
         sys.exit(1)
-    
+
     input_script = sys.argv[1]
     output_script = sys.argv[2]
     modify_update_script(input_script, output_script)
