@@ -10,8 +10,7 @@ import (
 func main() {
 	start := time.Now()
 
-	name := sqliteDiff.GetDiff("database/databases/Empty", "database/databases/14030605")
-	fmt.Println(name)
+	name := sqliteDiff.GetDiff("database/databases/Empty", "database/databases/1403")
 	duration := time.Since(start)
 	fmt.Printf("get diff time: %v\n", duration)
 

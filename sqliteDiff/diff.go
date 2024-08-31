@@ -30,7 +30,7 @@ func ApplySql(name string) {
 	if err != nil {
 		fmt.Println(err)
 	}
-	cmd := exec.Command("sqlite3", "database/databases/Empty")
+	cmd := exec.Command("sqlite3", "database/databases/Diff")
 	cmd.Stdin = inFile 
 	err = cmd.Run()
 	if err != nil {
