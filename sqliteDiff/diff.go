@@ -37,3 +37,12 @@ func ApplySql(name string) {
 		fmt.Println(err)
 	}
 }
+
+func ModifySqlForMaster(name string) {
+	cmd := exec.Command("/usr/bin/python3", "sqlProcessCommmand/scriptCovnerter2.py", name, name)
+	err := cmd.Run()
+	if err != nil {
+		fmt.Printf("Error: %v\n", err, )
+
+	}
+}
