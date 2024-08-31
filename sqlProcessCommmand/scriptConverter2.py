@@ -55,6 +55,8 @@ def modify_update_script(input_script, output_script):
     # Function to add UUID to INSERT statements
     def modify_insert(match):
         table = match.group(1)
+        if table.lower() == 'sqlite_sequence':
+            return ''
         columns = match.group(2)
         values = match.group(3)
         if 'uuid' not in columns.lower():
@@ -65,6 +67,8 @@ def modify_update_script(input_script, output_script):
     # Function to add UUID to UPDATE statements
     def modify_update(match):
         table = match.group(1)
+        if table.lower() == 'sqlite_sequence':
+            return ''
         set_clause = match.group(2)
         where_clause = match.group(3)
         if 'uuid' not in set_clause.lower():
