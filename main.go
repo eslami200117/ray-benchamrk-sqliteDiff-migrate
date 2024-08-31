@@ -22,16 +22,20 @@ func main() {
 	}
 
 	start := time.Now()
-
 	name := sqliteDiff.GetDiff(*db1, *db2)
 	duration := time.Since(start)
 	fmt.Printf("get diff time: %v\n", duration)
 
+	start2 := time.Now()
 	sqliteDiff.ModifySqlForMaster(name)
-	duration = time.Since(start)
+	duration = time.Since(start2)
 	fmt.Printf("modify script: %v\n", duration)
 
+	start3 := time.Now()
 	sqliteDiff.ApplySql(name)
-	duration = time.Since(start)
-	fmt.Printf("total time: %v\n", duration)
+	duration = time.Since(start3)
+	total_duration := time.Since(start)
+	fmt.Printf("apply sql time: %v\n", duration)
+	fmt.Printf("total time: %v\n", total_duration)
+
 }
