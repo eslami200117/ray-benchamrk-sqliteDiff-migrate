@@ -13,9 +13,10 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
-func GetDiff(src, des string) string{
+func GetDiff(des string) string{
+	src := "database/databases/master"
 	randN := rand.Int()
-	outFile, err := os.Create(fmt.Sprintf("script/diff_%s.sql", strconv.Itoa(randN)))
+	outFile, err := os.Create(fmt.Sprintf("script/%s.sql", strconv.Itoa(randN)))
 	if err != nil {
 		fmt.Printf("Error: %v\n", err, )
 
@@ -27,11 +28,11 @@ func GetDiff(src, des string) string{
 		fmt.Printf("Error: %v\n", err, )
 
 	}
-	return fmt.Sprintf("diff_%s.sql", strconv.Itoa(randN))
+	return fmt.Sprintf("%s.sql", strconv.Itoa(randN))
 }
 
-func ApplySql(name string) {
-	db, err := sql.Open("sqlite3", "database/databases/Diff")
+func ApplySql(sqlPath, dbPath string) {
+	db, err := sql.Open("sqlite3", fmt.Sprintf("database/databases/%s", dbPath))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -41,7 +42,7 @@ func ApplySql(name string) {
 	_, _ = db.Exec("PRAGMA journal_mode = MEMORY")
 	_, _ = db.Exec("PRAGMA temp_store = MEMORY")
 
-	path := fmt.Sprintf("script/%s", name)
+	path := fmt.Sprintf("script/%s", sqlPath)
 	err = applySQLFromFile(db, path)
 	if err != nil {
 		log.Fatalf("Failed to apply SQL file: %v", err)
@@ -53,9 +54,15 @@ func ApplySql(name string) {
 
 }
 
-func ModifySqlForMaster(name string) {
-	sqlFilePath := fmt.Sprintf("script/%s", name)
-	cmd := exec.Command("python3", "sqlProcessCommmand/scriptConverter2.py", sqlFilePath, sqlFilePath)
+func ModifySqlForMaster(name string, isMstr bool) {
+	sqlSourcePath := fmt.Sprintf("script/%s", name)
+	sqlDesPath := fmt.Sprintf("script/diff_%s", name); 
+	flag := "diff"
+	if isMstr {
+		sqlDesPath = fmt.Sprintf("script/mstr_%s", name)
+		flag = "master"
+	}
+	cmd := exec.Command("python3", "sqlProcessCommmand/scriptConverter2.py", sqlSourcePath, sqlDesPath, flag)
 	err := cmd.Run()
 	if err != nil {
 		fmt.Printf("Error: %v\n", err, )

@@ -39,6 +39,19 @@ def get_table_columns(table):
     
     return schema.get(table, [])
 
+
+def remove_sqlite_sequence_lines(input_script, output_script):
+    sqlite_sequence_pattern = re.compile(r'^\s*(INSERT INTO|UPDATE)\s+sqlite_sequence', re.IGNORECASE)
+
+    with open(input_script, 'r') as file:
+        lines = file.readlines()
+
+    filtered_lines = [line for line in lines if not sqlite_sequence_pattern.search(line)]
+
+    with open(output_script, 'w') as file:
+        file.writelines(filtered_lines)
+
+
 def modify_update_script(input_script, output_script):
     # Generate a single UUID for this script version
     script_uuid = str(uuid.uuid4())
@@ -110,10 +123,13 @@ def modify_update_script(input_script, output_script):
     print(f"Script version UUID: {script_uuid}")
 
 if __name__ == "__main__":
-    if len(sys.argv) != 3:
+    if len(sys.argv) != 4:
         print("Usage: python script.py old_script.sql new_script.sql")
         sys.exit(1)
 
     input_script = sys.argv[1]
     output_script = sys.argv[2]
-    modify_update_script(input_script, output_script)
+    if sys.argv[3] == "master":
+        remove_sqlite_sequence_lines(input_script, output_script)
+    else:
+        modify_update_script(input_script, output_script)
