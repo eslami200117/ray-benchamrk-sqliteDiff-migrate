@@ -6,6 +6,11 @@ import (
 	"os"
 	"os/exec"
 	"strconv"
+	"bufio"
+	"database/sql"
+	"log"
+
+	_ "github.com/mattn/go-sqlite3"
 )
 
 func GetDiff(src, des string) string{
@@ -26,16 +31,23 @@ func GetDiff(src, des string) string{
 }
 
 func ApplySql(name string) {
-	inFile, err := os.Open(fmt.Sprintf("script/%s", name))
+	db, err := sql.Open("sqlite3", "database/databases/Diff")
 	if err != nil {
-		fmt.Println(err)
+		log.Fatal(err)
 	}
-	cmd := exec.Command("sqlite3", "database/databases/Diff")
-	cmd.Stdin = inFile 
-	err = cmd.Run()
+	defer db.Close()
+
+	_, _ = db.Exec("PRAGMA synchronous = OFF")
+	_, _ = db.Exec("PRAGMA journal_mode = MEMORY")
+	_, _ = db.Exec("PRAGMA temp_store = MEMORY")
+
+	path := fmt.Sprintf("script/%s", name)
+	err = applySQLFromFile(db, path)
 	if err != nil {
-		fmt.Println(err)
+		log.Fatalf("Failed to apply SQL file: %v", err)
 	}
+
+	fmt.Println("SQL file applied successfully")
 }
 
 func ModifySqlForMaster(name string) {
@@ -47,3 +59,54 @@ func ModifySqlForMaster(name string) {
 
 	}
 }
+
+
+
+
+func applySQLFromFile(db *sql.DB, filePath string) error {
+	// Open the SQL file
+	file, err := os.Open(filePath)
+	if err != nil {
+		return fmt.Errorf("error opening file: %v", err)
+	}
+	defer file.Close()
+
+	// Start a transaction
+	tx, err := db.Begin()
+	if err != nil {
+		return fmt.Errorf("error starting transaction: %v", err)
+	}
+
+	// Use a buffered reader for efficient file reading
+	scanner := bufio.NewScanner(file)
+	var sqlStmt string
+
+	for scanner.Scan() {
+		line := scanner.Text()
+		sqlStmt += line
+
+		// Check if the line ends with a semicolon, indicating the end of a statement
+		if len(line) > 0 && line[len(line)-1] == ';' {
+			_, err := tx.Exec(sqlStmt)
+			if err != nil {
+				tx.Rollback()
+				return fmt.Errorf("error executing SQL statement: %v\nStatement: %s", err, sqlStmt)
+			}
+			sqlStmt = "" // Reset the statement after execution
+		}
+	}
+
+	// Handle any errors encountered during scanning
+	if err := scanner.Err(); err != nil {
+		tx.Rollback()
+		return fmt.Errorf("error reading file: %v", err)
+	}
+
+	// Commit the transaction
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("error committing transaction: %v", err)
+	}
+
+	return nil
+}
+
