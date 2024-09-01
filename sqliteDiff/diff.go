@@ -1,22 +1,25 @@
 package sqliteDiff
 
 import (
-	"fmt"
-	"math/rand"
-	"os"
-	"os/exec"
-	"strconv"
 	"bufio"
 	"database/sql"
+	"fmt"
 	"log"
+	"os"
+	"os/exec"
+	"time"
 
 	_ "github.com/mattn/go-sqlite3"
 )
 
 func GetDiff(des string) string{
 	src := "database/databases/master"
-	randN := rand.Int()
-	outFile, err := os.Create(fmt.Sprintf("script/%s.sql", strconv.Itoa(randN)))
+	currentTime := time.Now()
+
+	formattedTime := currentTime.Format("2006-01-02_15-04-05")
+
+
+	outFile, err := os.Create(fmt.Sprintf("script/%s.sql", formattedTime))
 	if err != nil {
 		fmt.Printf("Error: %v\n", err, )
 
@@ -28,7 +31,7 @@ func GetDiff(des string) string{
 		fmt.Printf("Error: %v\n", err, )
 
 	}
-	return fmt.Sprintf("%s.sql", strconv.Itoa(randN))
+	return fmt.Sprintf("%s.sql",formattedTime)
 }
 
 func ApplySql(sqlPath, dbPath string) {
