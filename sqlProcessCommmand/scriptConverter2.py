@@ -9,35 +9,35 @@ script_uuid = str(uuid.uuid4())
 def get_table_columns(table):
     schema = {
         'tblVersion': ['uuid', 'data_time'],
-        'android_metadata': ['locale', 'uuid'],
+        'android_metadata': ['locale'],
         'point_ray_db': ['id_ray_db', 'name_ray_db', 'date_ray_db', 'caster_ip_ray_db', 'mount_point_ray_db', 
                          'pitch_tilt_ray_db', 'roll_tilt_ray_db', 'head_tilt_ray_db', 'lat_ray_db', 'lon_ray_db', 
                          'height_ray_db', 'ant_height_ray_db', 'base_lat_ray_db', 'base_lon_ray_db', 'base_height_ray_db', 
                          'hdop_ray_db', 'vdop_ray_db', 'pdop_ray_db', 'hrms_ray_db', 'vrms_ray_db', 'num_sat_used_ray_db', 
                          'num_sat_tracked_ray_db', 'age_ray_db', 'class_ray_db', 'nav_mode_ray_db', 'is_tilt_corrected_ray_db', 
                          'Q_Code', 'picture', 'sigma_ray_db', 'caster_user_ray_db', 'logging_mode_ray_db', 'code', 
-                         'description', 'tilt_col_point_db', 'uuid'],
+                         'description', 'tilt_col_point_db'],
         'multipoint_ray_db': ['id_ray_db', 'name_ray_db', 'date_ray_db', 'point_ids_ray_db', 'line_type_ray_db', 
-                              'picture', 'multipoint_color', 'uuid'],
+                              'picture', 'multipoint_color'],
         'multipoint_points_ray_db': ['id_ray_db', 'name_ray_db', 'date_ray_db', 'caster_ip_ray_db', 'mount_point_ray_db', 
                                      'pitch_tilt_ray_db', 'roll_tilt_ray_db', 'head_tilt_ray_db', 'lat_ray_db', 'lon_ray_db', 
                                      'height_ray_db', 'ant_height_ray_db', 'base_lat_ray_db', 'base_lon_ray_db', 'base_height_ray_db', 
                                      'hdop_ray_db', 'vdop_ray_db', 'pdop_ray_db', 'hrms_ray_db', 'vrms_ray_db', 'num_sat_used_ray_db', 
                                      'num_sat_tracked_ray_db', 'age_ray_db', 'class_ray_db', 'nav_mode_ray_db', 'is_tilt_corrected_ray_db',
-                                     'sigma_ray_db', 'caster_user_ray_db', 'tilt_col_point_db', 'uuid'],
+                                     'sigma_ray_db', 'caster_user_ray_db', 'tilt_col_point_db'],
         'description_project_ray_db': ['description_ray_db', 'model_ray_db', 'date_ray_db', 'reference_ray_db', 
                                        'localization_enable_ray_db', 'localization_ray_db', 'localization_result_ray_db', 
-                                       'is_cadastre', 'enable_transformation', 'project_time_zone_ray_db', 'uuid'],
-        'custom_field_ray_db': ['id_ray_db', 'name_ray_db', 'description_ray_db', 'line_type_ray_db', 'uuid'],
+                                       'is_cadastre', 'enable_transformation', 'project_time_zone_ray_db'],
+        'custom_field_ray_db': ['id_ray_db', 'name_ray_db', 'description_ray_db', 'line_type_ray_db'],
         'columns_template_ray_db': ['name_ray_db', 'point_columns_list_ray_db', 'point_columns_visibility_ray_db', 
                                     'point_custom_columns_visibility_ray_db', 'polyline_columns_list_ray_db', 
                                     'polyline_columns_visibility_ray_db', 'polyline_custom_columns_visibility_ray_db', 
                                     'polygon_columns_list_ray_db', 'polygon_columns_visibility_ray_db', 
-                                    'polygon_custom_columns_visibility_ray_db', 'quick_code_columns_visibility_ray_db', 'uuid'],
-        'tblExceptionLog': ['id_ray_db', 'log_info_ray_db', 'date_time_ray_db', 'uuid'],
-        'tblQuickCode': ['Id', 'Code', 'Style', 'Color', 'Description', 'GroupId', 'IsActive', 'Size', 'ShortcutKeyCode', 'uuid'],
-        'tblQuickCodeGroup': ['Id', 'Title', 'Description', 'IsSelected', 'uuid'],
-        'tblCadastreLog': ['id_ray_db', 'data_db', 'uuid']
+                                    'polygon_custom_columns_visibility_ray_db', 'quick_code_columns_visibility_ray_db'],
+        'tblExceptionLog': ['id_ray_db', 'log_info_ray_db', 'date_time_ray_db'],
+        'tblQuickCode': ['Id', 'Code', 'Style', 'Color', 'Description', 'GroupId', 'IsActive', 'Size', 'ShortcutKeyCode'],
+        'tblQuickCodeGroup': ['Id', 'Title', 'Description', 'IsSelected'],
+        'tblCadastreLog': ['id_ray_db', 'data_db']
     }
     
     return schema.get(table, [])
@@ -114,8 +114,8 @@ def convert_delete_to_insert(match):
     where_dict = dict(where_items)
 
     # Prepare INSERT statement with NULL values except for the WHERE clause columns and UUID
-    insert_columns = ', '.join(columns)
-    insert_values = ', '.join([where_dict.get(col, 'NULL') for col in range(len(columns)-1)] + [f"'{script_uuid}'"])
+    insert_columns = ', '.join(columns + ['uuid'])
+    insert_values = ', '.join([where_dict.get(col, 'NULL') for col in columns] + [f"'{script_uuid}'"])
 
     return f"INSERT INTO {table} ({insert_columns}) VALUES ({insert_values});"
 
