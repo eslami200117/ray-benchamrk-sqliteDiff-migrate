@@ -45,14 +45,13 @@ def get_table_columns(table):
 
 def remove_sqlite_sequence_lines(input_script, output_script):
     sqlite_sequence_pattern = re.compile(r'^\s*(INSERT INTO|UPDATE)\s+sqlite_sequence', re.IGNORECASE)
-    delete_pattern = re.compile(r'^\s*DELETE\s+FROM', re.IGNORECASE)
 
     with open(input_script, 'r') as file:
         lines = file.readlines()
 
     filtered_lines = [
         line for line in lines 
-        if not sqlite_sequence_pattern.search(line) and not delete_pattern.search(line)
+        if not sqlite_sequence_pattern.search(line)
     ]
     with open(output_script, 'w') as file:
         file.writelines(filtered_lines)
@@ -63,32 +62,28 @@ def convert_update_to_insert_and_update(match):
         return ''
     set_clause = match.group(2)
     where_clause = match.group(3)
-
-    # Get all column names for the table
-    columns = get_table_columns(table)
-    
-    # Generate a new UUID for this operation
-    new_uuid = str(uuid.uuid4())
     
     # Step 1: INSERT a copy of the existing row
-    insert_columns = ', '.join(columns + ['uuid'])
-    insert_values = ', '.join(columns + [f"'{new_uuid}'"])
     insert_statement = f"""
 INSERT INTO {table} 
-SELECT *
-FROM {table}
-WHERE {where_clause}
-ORDER BY rowid DESC
+SELECT * 
+FROM {table} 
+WHERE {where_clause} 
+ORDER BY rowid DESC 
 LIMIT 1;
 """
     
     # Step 2: UPDATE the newly inserted row
     update_statement = f"""
-UPDATE {table}
-SET {set_clause}
-WHERE {where_clause}
-ORDER BY rowid DESC
-LIMIT 1;
+UPDATE {table} 
+SET {set_clause}, uuid = '{script_uuid}' 
+WHERE rowid = ( 
+    SELECT rowid 
+    FROM {table} 
+    WHERE {where_clause} 
+    ORDER BY rowid DESC 
+    LIMIT 1 
+);
 """
     
     return insert_statement + "\n" + update_statement
@@ -119,8 +114,8 @@ def convert_delete_to_insert(match):
     where_dict = dict(where_items)
 
     # Prepare INSERT statement with NULL values except for the WHERE clause columns and UUID
-    insert_columns = ', '.join(columns + ['uuid'])
-    insert_values = ', '.join([where_dict.get(col, 'NULL') for col in columns] + [f"'{script_uuid}'"])
+    insert_columns = ', '.join(columns)
+    insert_values = ', '.join([where_dict.get(col, 'NULL') for col in range(len(columns)-1)] + [f"'{script_uuid}'"])
 
     return f"INSERT INTO {table} ({insert_columns}) VALUES ({insert_values});"
 
