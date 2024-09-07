@@ -3,6 +3,9 @@ import uuid
 from datetime import datetime
 import sys
 
+# Generate a single UUID for this script version
+script_uuid = str(uuid.uuid4())
+
 def get_table_columns(table):
     schema = {
         'tblVersion': ['uuid', 'data_time'],
@@ -54,11 +57,74 @@ def remove_sqlite_sequence_lines(input_script, output_script):
     with open(output_script, 'w') as file:
         file.writelines(filtered_lines)
 
+def convert_update_to_insert_and_update(match):
+    table = match.group(1)
+    if table.lower() == 'sqlite_sequence':
+        return ''
+    set_clause = match.group(2)
+    where_clause = match.group(3)
 
-def modify_update_script(input_script, output_script):
-    # Generate a single UUID for this script version
-    script_uuid = str(uuid.uuid4())
+    # Get all column names for the table
+    columns = get_table_columns(table)
+    
+    # Generate a new UUID for this operation
+    new_uuid = str(uuid.uuid4())
+    
+    # Step 1: INSERT a copy of the existing row
+    insert_columns = ', '.join(columns + ['uuid'])
+    insert_values = ', '.join(columns + [f"'{new_uuid}'"])
+    insert_statement = f"""
+INSERT INTO {table} 
+SELECT *
+FROM {table}
+WHERE {where_clause}
+ORDER BY rowid DESC
+LIMIT 1;
+"""
+    
+    # Step 2: UPDATE the newly inserted row
+    update_statement = f"""
+UPDATE {table}
+SET {set_clause}
+WHERE {where_clause}
+ORDER BY rowid DESC
+LIMIT 1;
+"""
+    
+    return insert_statement + "\n" + update_statement
 
+# Function to modify INSERT statements (keep as is, just add UUID if not present)
+def modify_insert(match):
+    table = match.group(1)
+    if table.lower() == 'sqlite_sequence':
+        return ''
+    columns = match.group(2)
+    values = match.group(3)
+    if 'uuid' not in columns.lower():
+        columns += ', uuid'
+        values += f", '{script_uuid}'"
+    return f"INSERT INTO {table} ({columns}) VALUES ({values})"
+
+
+# Function to convert DELETE to INSERT with NULL values
+def convert_delete_to_insert(match):
+    table = match.group(1)
+    where_clause = match.group(2)
+
+    # Get all column names for the table
+    columns = get_table_columns(table)
+
+    # Parse the WHERE clause to get the columns and values
+    where_items = re.findall(r'(\w+)\s*=\s*([^,\s]+)', where_clause)
+    where_dict = dict(where_items)
+
+    # Prepare INSERT statement with NULL values except for the WHERE clause columns and UUID
+    insert_columns = ', '.join(columns + ['uuid'])
+    insert_values = ', '.join([where_dict.get(col, 'NULL') for col in columns] + [f"'{script_uuid}'"])
+
+    return f"INSERT INTO {table} ({insert_columns}) VALUES ({insert_values});"
+
+def modify_sql_script(input_script, output_script):
     # Read the input script
     with open(input_script, 'r') as file:
         script_content = file.read()
@@ -68,50 +134,10 @@ def modify_update_script(input_script, output_script):
     update_pattern = re.compile(r'UPDATE\s+(\w+)\s+SET\s+(.*?)\s+WHERE\s+(.*?);', re.IGNORECASE | re.DOTALL)
     delete_pattern = re.compile(r'DELETE\s+FROM\s+(\w+)\s+WHERE\s+(.*?);', re.IGNORECASE | re.DOTALL)
 
-    # Function to add UUID to INSERT statements
-    def modify_insert(match):
-        table = match.group(1)
-        if table.lower() == 'sqlite_sequence':
-            return ''
-        columns = match.group(2)
-        values = match.group(3)
-        if 'uuid' not in columns.lower():
-            columns += ', uuid'
-            values += f", '{script_uuid}'"
-        return f"INSERT INTO {table} ({columns}) VALUES ({values})"
-
-    # Function to add UUID to UPDATE statements
-    def modify_update(match):
-        table = match.group(1)
-        if table.lower() == 'sqlite_sequence':
-            return ''
-        set_clause = match.group(2)
-        where_clause = match.group(3)
-        if 'uuid' not in set_clause.lower():
-            set_clause += f", uuid = '{script_uuid}'"
-        return f"UPDATE {table} SET {set_clause} WHERE {where_clause};"
-
-    # Function to convert DELETE to UPDATE with NULL values
-    def convert_delete_to_update(match):
-        table = match.group(1)
-        where_clause = match.group(2)
-        
-        # Get all column names for the table
-        column_names = get_table_columns(table)
-        
-        # Create SET clause with NULL values for all columns except the primary key
-        primary_key = column_names[0]  # Assuming the first column is always the primary key
-        set_clause = ', '.join([f"{col} = NULL" for col in column_names if col.lower() != primary_key.lower() and col.lower() != 'uuid'])
-        
-        # Add UUID to the SET clause
-        set_clause += f", uuid = '{script_uuid}'"
-        
-        return f"UPDATE {table} SET {set_clause} WHERE {where_clause};"
-
-    # Modify INSERT, UPDATE, and DELETE statements
+    # Modify INSERT, convert UPDATE and DELETE to INSERT
     modified_script = insert_pattern.sub(modify_insert, script_content)
-    modified_script = update_pattern.sub(modify_update, modified_script)
-    modified_script = delete_pattern.sub(convert_delete_to_update, modified_script)
+    modified_script = update_pattern.sub(convert_update_to_insert_and_update, modified_script)
+    modified_script = delete_pattern.sub(convert_delete_to_insert, modified_script)
 
     # Add entry to tblVersion
     current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -127,7 +153,7 @@ def modify_update_script(input_script, output_script):
 
 if __name__ == "__main__":
     if len(sys.argv) != 4:
-        print("Usage: python script.py old_script.sql new_script.sql")
+        print("Usage: python script.py old_script.sql new_script.sql masrt")
         sys.exit(1)
 
     input_script = sys.argv[1]
@@ -135,4 +161,4 @@ if __name__ == "__main__":
     if sys.argv[3] == "master":
         remove_sqlite_sequence_lines(input_script, output_script)
     else:
-        modify_update_script(input_script, output_script)
+        modify_sql_script(input_script, output_script)
