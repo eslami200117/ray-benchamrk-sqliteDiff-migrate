@@ -84,25 +84,17 @@ def modify_insert(match):
     return f"INSERT INTO {table} ({columns}) VALUES ({values})"
 
 
-# Function to convert DELETE to INSERT with NULL values
+# Function to convert DELETE to INSERT with ex values
 def convert_delete_to_insert(match):
     table = match.group(1)
     if table.lower() == 'sqlite_sequence':
         return ''
     where_clause = match.group(2)
 
-    # Get all column names for the table
-    columns = get_table_columns(table)
-
-    # Parse the WHERE clause to get the columns and values
-    where_items = re.findall(r'(\w+)\s*=\s*([^,\s]+)', where_clause)
-    where_dict = dict(where_items)
-
-    # Prepare INSERT statement with NULL values except for the WHERE clause columns and UUID
-    insert_columns = ', '.join(columns + ['uuid'])
-    insert_values = ', '.join([where_dict.get(col, 'NULL') for col in columns] + [f"'{script_uuid}'"])
-
-    return f"INSERT INTO {table} ({insert_columns}) VALUES ({insert_values});"
+    insert_statement = f"""INSERT INTO {table} SELECT * FROM {table} WHERE {where_clause} ORDER BY rowid DESC LIMIT 1;"""
+    update_statement = f"""UPDATE {table} SET isDeleted = 1, uuid = '{script_uuid}' WHERE rowid = ( SELECT rowid FROM {table} WHERE {where_clause} ORDER BY rowid DESC LIMIT 1 );"""
+    
+    return insert_statement + "\n" + update_statement
 
 def modify_sql_script(input_script, output_script):
     # Read the input script
