@@ -12,8 +12,11 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
-func GetDiff(des string) string{
-	src := "database/databases/master"
+func GetDiff(src, des string,) string{
+	if des == "" {
+		des = src
+		src = "database/databases/master"
+	}
 	currentTime := time.Now()
 
 	formattedTime := currentTime.Format("2006-01-02_15-04-05")

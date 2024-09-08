@@ -9,18 +9,20 @@ import (
 )
 
 func main() {
-	db := flag.String("db", "", "Path to the first database file")
+	db1 := flag.String("db1", "", "Path to the first database file")
+	db2 := flag.String("db2", "", "Path to the first database file")
 
 	flag.Parse()
 
-	if *db == "" {
-		fmt.Println("Both db1 and db2 arguments are required")
+	if *db1 == "" {
+		fmt.Println("Both db1 arguments are required")
 		flag.Usage()
 		return
 	}
 
+
 	start := time.Now()
-	name := sqliteDiff.GetDiff(*db)
+	name := sqliteDiff.GetDiff(*db1, *db2)
 	duration := time.Since(start)
 	fmt.Printf("get diff time: %v\n", duration)
 
