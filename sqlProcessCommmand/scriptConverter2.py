@@ -44,7 +44,7 @@ def get_table_columns(table):
 
 
 def remove_sqlite_sequence_lines(input_script, output_script):
-    sqlite_sequence_pattern = re.compile(r'^\s*(INSERT INTO|UPDATE)\s+sqlite_sequence', re.IGNORECASE)
+    sqlite_sequence_pattern = re.compile(r'^\s*(INSERT INTO|UPDATE|DELETE FROM)\s+sqlite_sequence', re.IGNORECASE)
 
     with open(input_script, 'r') as file:
         lines = file.readlines()
@@ -64,27 +64,10 @@ def convert_update_to_insert_and_update(match):
     where_clause = match.group(3)
     
     # Step 1: INSERT a copy of the existing row
-    insert_statement = f"""
-INSERT INTO {table} 
-SELECT * 
-FROM {table} 
-WHERE {where_clause} 
-ORDER BY rowid DESC 
-LIMIT 1;
-"""
+    insert_statement = f"""INSERT INTO {table} SELECT * FROM {table} WHERE {where_clause} ORDER BY rowid DESC LIMIT 1;"""
     
     # Step 2: UPDATE the newly inserted row
-    update_statement = f"""
-UPDATE {table} 
-SET {set_clause}, uuid = '{script_uuid}' 
-WHERE rowid = ( 
-    SELECT rowid 
-    FROM {table} 
-    WHERE {where_clause} 
-    ORDER BY rowid DESC 
-    LIMIT 1 
-);
-"""
+    update_statement = f"""UPDATE {table} SET {set_clause}, uuid = '{script_uuid}' WHERE rowid = ( SELECT rowid FROM {table} WHERE {where_clause} ORDER BY rowid DESC LIMIT 1 );"""
     
     return insert_statement + "\n" + update_statement
 
@@ -104,6 +87,8 @@ def modify_insert(match):
 # Function to convert DELETE to INSERT with NULL values
 def convert_delete_to_insert(match):
     table = match.group(1)
+    if table.lower() == 'sqlite_sequence':
+        return ''
     where_clause = match.group(2)
 
     # Get all column names for the table
