@@ -8,7 +8,7 @@ script_uuid = str(uuid.uuid4())
 
 def get_table_columns(table):
     schema = {
-        'tblVersion': ['uuid', 'data_time'],
+        'tblVersion': ['uuid', 'date_time'],
         'android_metadata': ['locale'],
         'point_ray_db': ['id_ray_db', 'name_ray_db', 'date_ray_db', 'caster_ip_ray_db', 'mount_point_ray_db', 
                          'pitch_tilt_ray_db', 'roll_tilt_ray_db', 'head_tilt_ray_db', 'lat_ray_db', 'lon_ray_db', 
