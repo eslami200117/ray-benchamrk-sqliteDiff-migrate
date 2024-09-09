@@ -113,7 +113,7 @@ def modify_sql_script(input_script, output_script):
 
     # Add entry to tblVersion
     current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    version_entry = f"INSERT INTO tblVersion (uuid, data_time) VALUES ('{script_uuid}', '{current_time}');"
+    version_entry = f"INSERT INTO tblVersion (uuid, date_time) VALUES ('{script_uuid}', '{current_time}');"
     modified_script += "\n" + version_entry
 
     # Write the modified script
