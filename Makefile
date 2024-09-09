@@ -20,7 +20,18 @@ build:
 ## remove old database
 .PHONY: rmd
 rmd:
-	rm database/databases/master && rm database/databases/Diff && sqlite3 database/databases/master < database/clientSchema.sql&& sqlite3 database/databases/Diff < database/diffSchema.sql
+	rm database/databases/master
+	rm database/databases/Diff
+	sqlite3 database/databases/master < database/clientSchema.sql
+	sqlite3 database/databases/Diff < database/diffSchema.sql
+
+## add triggers to Diff database
+.PHONY: trigger
+trigger:
+	sqlite3 database/databases/Diff < database/sqlite-delete-to-insert-triggers.sql
+	sqlite3 database/databases/Diff < database/sqlite-insert-triggers-with-uuid.sql
+	sqlite3 database/databases/Diff < database/sqlite-update-to-insert-trigger.sql
+
 
 ## remove old script
 .PHONY: rms

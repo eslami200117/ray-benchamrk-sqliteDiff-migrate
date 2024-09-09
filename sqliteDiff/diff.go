@@ -68,7 +68,7 @@ func ModifySqlForMaster(name string, isMstr bool) {
 		sqlDesPath = fmt.Sprintf("script/mstr_%s", name)
 		flag = "master"
 	}
-	cmd := exec.Command("python3", "sqlProcessCommmand/scriptConverter2.py", sqlSourcePath, sqlDesPath, flag)
+	cmd := exec.Command("python3", "sqlProcessCommmand/scriptConvertor.py", sqlSourcePath, sqlDesPath, flag)
 	err := cmd.Run()
 	if err != nil {
 		fmt.Printf("Error: %v\n", err, )

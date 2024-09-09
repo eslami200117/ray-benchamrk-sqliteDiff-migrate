@@ -34,6 +34,7 @@ func main() {
 
 	start3 := time.Now()
 	sqliteDiff.ApplySql(fmt.Sprintf("diff_%s", name), "Diff")
+	sqliteDiff.ApplySql(fmt.Sprintf("mstr_%s", name), "Diff")
 	sqliteDiff.ApplySql(fmt.Sprintf("mstr_%s", name), "master")
 	duration = time.Since(start3)
 	total_duration := time.Since(start)
