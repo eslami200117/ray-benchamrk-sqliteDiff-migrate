@@ -1,5 +1,4 @@
 database/
 script/
-*.sql
 /.vscode
 *.sqlite
